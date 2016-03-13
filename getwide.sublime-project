@@ -1,0 +1,29 @@
+{
+	"folders": [
+		{"path": "."}
+	],
+
+    "SublimeLinter": {
+        "@python": 3.5,
+
+        "linters":
+        {
+            "pylint": {
+                "paths": [".env/lib/python3.5/site-packages"],
+
+                "disable": [
+                    "C0103",  // invalid-name
+                    "C0111",  // missing-docstring
+                    "C0321",  // multiple-statements
+                    "C0330",  // bad-continuation
+                    "C0413",  // wrong-import-position
+                    "R0913",  // too-many-arguments
+                ]
+            }
+        }
+    },
+
+    "settings": {
+        "python_interpreter": "$project_path/.env/bin/python"
+    }
+}

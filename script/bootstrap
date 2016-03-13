@@ -1,0 +1,23 @@
+#!/bin/bash
+# -*- coding: utf-8 -*-
+#
+# Resolve all dependencies that the application requires.
+
+set -eo pipefail
+
+
+function main () {
+    cd "$(dirname "$0")/.."
+
+    # TODO:
+    #  - check platform
+    #  - check python3
+
+    STATIC_DEPS=true LIBXML2_VERSION=2.9.2 pip install -r requirements.txt
+
+    cd -
+}
+
+
+main "$@"
+unset -f main

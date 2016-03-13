@@ -1,0 +1,9 @@
+.cache
+.eggs
+.env
+__pycache__
+*.sublime-workspace
+
+*.py[cod]
+*.egg-info
+*.dist-info
