@@ -53,7 +53,10 @@ def main():
         logger.error('ERROR: Invalid output path given: %s', args.output)
         sys.exit(1)
 
-    categories = frozenset(args.category)
+    categories = frozenset(args.category) if args.category else []
+    if not categories:
+        logger.warning('WARNING: Categories was not specified – fetching ALL')
+
     resolutions = frozenset(args.resolution)
 
     logger.debug('DEBUG: arg --verbose: %d', args.verbose)
