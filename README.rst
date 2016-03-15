@@ -2,4 +2,4 @@
 getwide
 =======
 
-WallpapersWide.com content grabber.
+WallpapersWide.com content grabber
