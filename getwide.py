@@ -38,6 +38,11 @@ def main():
         help='grab specified resolution', action='append', default=['2560x1440']
     )
 
+    arg_parser.add_argument(
+        '-t', '--timeout',
+        help='add timeout for network I/O', default=0
+    )
+
     args = arg_parser.parse_args()
 
     if args.verbose == 1:
