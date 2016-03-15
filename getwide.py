@@ -16,9 +16,84 @@ from lxml import (etree,)
 _LOG_FORMAT = '%(name)s: %(message)s'
 _LOG_LEVEL = logging.WARNING
 
+_CHUNK_SIZE = 4096  # 4k chunk size.
 _MAX_PROCESSES = multiprocessing.cpu_count()  # 1 process per core.
+
 _HOST = 'http://wallpaperswide.com'
 _HEADERS = {'Referer': _HOST}
+
+
+class Fetcher:
+    _INSTANCE = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._INSTANCE:
+            cls._INSTANCE = super().__new__(cls)
+        return cls._INSTANCE
+
+    def __init__(self, *, logger, session, timeout):
+        self._logger = logger
+        self.session = session
+        self._timeout = timeout
+
+    def __del__(self):
+        self._close_session()
+
+    def _close_session(self):
+        if getattr(self, '_session', None):
+            if not self._session.closed:
+                self._session.close()
+
+    @property
+    def session(self):
+        return self._session
+
+    @session.setter
+    def session(self, s):
+        if not isinstance(s, aiohttp.ClientSession):
+            raise TypeError('aiohttp.ClientSession object is expected instead '
+                            'of: {!r}'.format(s))
+        self._close_session()
+        self._session = s
+
+    async def fetch_page(self, url):
+        """
+        Raises:
+            asyncio.TimeoutError
+            ConnectionError
+        """
+        with aiohttp.Timeout(self._timeout):
+            async with self._session.get(url) as response:
+                if response.status != 200:
+                    self._logger.warning("WARNING: Error connecting to "
+                                         "'%s': %d", url, response.status)
+                    raise ConnectionError(response.status, url)
+
+                return await response.read()
+
+    async def fetch_binary(self, url, file):
+        """
+        Raises:
+            asyncio.TimeoutError
+            ConnectionError
+        """
+        with aiohttp.Timeout(self._timeout):
+            async with self._session.get(url) as response:
+                if response.status != 200:
+                    self._logger.warning("WARNING: Error connecting to "
+                                         "'%s': %d", url, response.status)
+                    raise ConnectionError(response.status, url)
+
+                with open(file, 'wb') as fd:
+                    while True:
+                        chunk = await response.content.read(_CHUNK_SIZE)
+                        if not chunk:
+                            break
+                        fd.write(chunk)
+
+                return op.abspath(file)
+
+
 class Parser:
     pass
 
