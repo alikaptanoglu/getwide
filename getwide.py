@@ -10,7 +10,7 @@ import multiprocessing
 from os import path as op
 
 import aiohttp
-from lxml import (etree,)
+from lxml import etree
 
 
 _LOG_FORMAT = '%(name)s: %(message)s'
@@ -21,6 +21,10 @@ _MAX_PROCESSES = multiprocessing.cpu_count()  # 1 process per core.
 
 _HOST = 'http://wallpaperswide.com'
 _HEADERS = {'Referer': _HOST}
+
+
+class ParserError(Exception):
+    pass
 
 
 class Singleton(type):
@@ -103,7 +107,30 @@ class Fetcher(metaclass=Singleton):
 
 
 class Parser:
-    pass
+
+    def __init__(self, xpath, *, logger, parser=etree.HTMLParser()):
+        self._logger = logger
+        self._parser = parser
+
+        try:
+            self._xpath = etree.XPath(xpath)
+        except (TypeError, etree.XPathError):
+            self._logger.error('ERROR: XPath error: %s', xpath)
+            raise ParserError(xpath)
+
+    def __call__(self, text):
+        self._tree = etree.fromstring(text, parser=self._parser)
+        self._result = self._xpath(self._tree)
+
+        return self._result
+
+    @property
+    def tree(self):
+        return getattr(self, '_tree', None)
+
+    @property
+    def result(self):
+        return getattr(self, '_result', None)
 
 
 class Application(metaclass=Singleton):
