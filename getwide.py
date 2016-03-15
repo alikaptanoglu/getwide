@@ -17,6 +17,8 @@ _LOG_FORMAT = '%(name)s: %(message)s'
 _LOG_LEVEL = logging.WARNING
 
 _MAX_PROCESSES = multiprocessing.cpu_count()  # 1 process per core.
+_HOST = 'http://wallpaperswide.com'
+_HEADERS = {'Referer': _HOST}
 class Parser:
     pass
 
