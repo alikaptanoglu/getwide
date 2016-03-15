@@ -30,11 +30,11 @@ class Singleton(type):
 
         def new(cls_, *args, **kwargs):
             if not cls_._INSTANCE:
-                cls_._INSTANCE = type(cls_.__name__, cls_.__bases__, {})
+                cls_._INSTANCE = object.__new__(cls_)
             return cls_._INSTANCE
 
         setattr(cls, '_INSTANCE', None)
-        setattr(cls, '__new__', new)
+        setattr(cls, '__new__', staticmethod(new))
 
 
 class Fetcher(metaclass=Singleton):
