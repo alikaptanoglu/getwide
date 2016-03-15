@@ -47,7 +47,7 @@ def main():
         globals()['_LOG_FORMAT'] = '%(name)s[%(process)d]: %(message)s'
 
     logging.basicConfig(format=_LOG_FORMAT, level=_LOG_LEVEL)
-    logger = logging.getLogger(op.basename(__file__))
+    logger = logging.getLogger(op.basename(__file__.rsplit('.', 1)[0]))
 
     if not op.isdir(args.output):
         logger.error('ERROR: Invalid output path given: %s', args.output)
