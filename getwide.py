@@ -12,6 +12,24 @@ from lxml import etree
 _LOG_FORMAT = '%(name)s: %(message)s'
 _LOG_LEVEL = logging.WARNING
 
+_MAX_PROCESSES = multiprocessing.cpu_count()  # 1 process per core.
+class Parser:
+    pass
+
+
+class Application:
+
+    def __init__(self, *, logger):
+        self._loop = asyncio.get_event_loop()
+        self._queue = asyncio.Queue()
+        self._logger = logger
+
+        self._logger.debug('DEBUG: Maximum number of processes: %d',
+                           _MAX_PROCESSES)
+
+    def __del__(self):
+        self._loop.close()
+
 
 def main():
     arg_parser = argparse.ArgumentParser(
@@ -68,6 +86,8 @@ def main():
     logger.debug('DEBUG: arg --output: %s', args.output)
     logger.debug('DEBUG: arg --category: %r', categories)
     logger.debug('DEBUG: arg --resolution: %r', resolutions)
+
+    app = Application(logger=logger)
 
 
 if __name__ == '__main__':
