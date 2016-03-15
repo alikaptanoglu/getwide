@@ -23,13 +23,21 @@ _HOST = 'http://wallpaperswide.com'
 _HEADERS = {'Referer': _HOST}
 
 
-class Fetcher:
-    _INSTANCE = None
+class Singleton(type):
 
-    def __new__(cls, *args, **kwargs):
-        if not cls._INSTANCE:
-            cls._INSTANCE = super().__new__(cls)
-        return cls._INSTANCE
+    def __init__(cls, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        def new(cls_, *args, **kwargs):
+            if not cls_._INSTANCE:
+                cls_._INSTANCE = type(cls_.__name__, cls_.__bases__, {})
+            return cls_._INSTANCE
+
+        setattr(cls, '_INSTANCE', None)
+        setattr(cls, '__new__', new)
+
+
+class Fetcher(metaclass=Singleton):
 
     def __init__(self, *, logger, session, timeout):
         self._logger = logger
@@ -98,7 +106,7 @@ class Parser:
     pass
 
 
-class Application:
+class Application(metaclass=Singleton):
 
     def __init__(self, *, logger):
         self._loop = asyncio.get_event_loop()
