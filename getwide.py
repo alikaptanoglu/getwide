@@ -5,8 +5,12 @@ import os
 import sys
 import argparse
 import logging
+import asyncio
+import multiprocessing
 from os import path as op
-from lxml import etree
+
+import aiohttp
+from lxml import (etree,)
 
 
 _LOG_FORMAT = '%(name)s: %(message)s'
