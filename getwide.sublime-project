@@ -17,6 +17,7 @@
                     "C0321",  // multiple-statements
                     "C0330",  // bad-continuation
                     "C0413",  // wrong-import-position
+                    "R0903",  // too-few-public-methods
                     "R0913",  // too-many-arguments
                 ]
             }
