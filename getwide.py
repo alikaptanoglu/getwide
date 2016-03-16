@@ -22,6 +22,23 @@ _MAX_PROCESSES = multiprocessing.cpu_count()  # 1 process per core.
 _HOST = 'http://wallpaperswide.com'
 _HEADERS = {'Referer': _HOST}
 
+_XPATH_TEXT = 'text()'
+_XPATH_HREF = '@href'
+
+_xpath_text_href = lambda xp: '|'.join([xp + _XPATH_TEXT, xp + _XPATH_HREF])
+
+_XPATH_CATEGORY = "//ul[@class='side-panel categories']//a/"
+_XPATH_CATEGORIES = _xpath_text_href(_XPATH_CATEGORY)
+
+_XPATH_PAGE = "//div[@class='pagination']//a/"
+_XPATH_PAGES = _xpath_text_href(_XPATH_PAGE)
+
+_XPATH_WALLPAPERS = ("//ul[@class='wallpapers']//li[@class='wall']//a/" +
+                     _XPATH_HREF)
+
+_XPATH_RESOLUTIONS = ("//div[@class='wallpaper-resolutions']//"
+                      "a[@target='_self']/") + _XPATH_HREF
+
 
 class ParserError(Exception):
     pass
