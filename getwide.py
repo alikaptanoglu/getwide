@@ -114,13 +114,24 @@ class Parser:
 
         try:
             self._xpath = etree.XPath(xpath)
-        except (TypeError, etree.XPathError):
-            self._logger.error('ERROR: XPath error: %s', xpath)
-            raise ParserError(xpath)
+        except (TypeError, etree.XPathError) as ex:
+            self._logger.error('ERROR: XPath error: %s: %s', ex, xpath)
+            raise ParserError(ex, xpath)
 
     def __call__(self, text):
-        self._tree = etree.fromstring(text, parser=self._parser)
-        self._result = self._xpath(self._tree)
+        try:
+            self._tree = etree.fromstring(text, parser=self._parser)
+        except etree.XMLSyntaxError as ex:
+            self._logger.error('ERROR: XML syntax error: %s', ex)
+            raise ParserError(ex)
+
+        try:
+            self._result = self._xpath(self._tree)
+        except etree.XPathError as ex:
+            self._logger.error('ERROR: XPath evaluation error: %s: %r', ex,
+                               self._xpath)
+            raise ParserError(ex, repr(self._xpath))
+
 
         return self._result
 
