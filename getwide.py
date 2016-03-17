@@ -8,6 +8,7 @@ import logging
 import asyncio
 import multiprocessing
 from os import path as op
+from concurrent.futures import ThreadPoolExecutor
 
 import aiohttp
 from lxml import etree
@@ -17,7 +18,7 @@ _LOG_FORMAT = '%(name)s: %(message)s'
 _LOG_LEVEL = logging.WARNING
 
 _CHUNK_SIZE = 4096  # 4k chunk size.
-_MAX_PROCESSES = multiprocessing.cpu_count()  # 1 process per core.
+_MAX_THREADS = multiprocessing.cpu_count()  # 1 thread per core.
 
 _HOST = 'http://wallpaperswide.com'
 _HEADERS = {'Referer': _HOST}
@@ -165,11 +166,12 @@ class Application(metaclass=Singleton):
 
     def __init__(self, *, logger):
         self._loop = asyncio.get_event_loop()
+        self._pool = ThreadPoolExecutor(max_workers=_MAX_THREADS)
         self._queue = asyncio.Queue()
         self._logger = logger
 
         self._logger.debug('DEBUG: Maximum number of processes: %d',
-                           _MAX_PROCESSES)
+                           _MAX_THREADS)
 
     def __del__(self):
         self._loop.close()
