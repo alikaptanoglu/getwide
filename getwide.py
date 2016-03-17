@@ -8,6 +8,7 @@ import logging
 import asyncio
 import multiprocessing
 from os import path as op
+from timeit import default_timer as timer
 from concurrent.futures import ThreadPoolExecutor
 
 import aiohttp
@@ -245,7 +246,15 @@ def main():
     logger.debug('DEBUG: arg --resolution: %r', resolutions)
     logger.debug('DEBUG: arg --timeout: %d', timeout)
 
-    app = Application(logger=logger)
+    time_start = timer()
+    app = Application(logger=logger, timeout=timeout, categories=categories,
+                      resolutions=resolutions, path=args.output)
+
+    time_end = timer()
+    elapsed_minutes = ((time_end - time_start)/60)
+    elapsed_hours = elapsed_minutes/60
+    logger.info('Elapsed time: %f minutes / %f hours', elapsed_minutes,
+                elapsed_hours)
 
 
 if __name__ == '__main__':
