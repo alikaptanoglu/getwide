@@ -138,28 +138,20 @@ class Parser:
 
     def __call__(self, text):
         try:
-            self._tree = etree.fromstring(text, parser=self._parser)
+            tree = etree.fromstring(text, parser=self._parser)
         except etree.XMLSyntaxError as ex:
             self._logger.error('ERROR: XML syntax error: %s', ex)
             raise ParserError(ex)
 
         try:
-            self._result = self._xpath(self._tree)
+            result = [str(r) for r in self._xpath(tree)]
         except etree.XPathError as ex:
             self._logger.error('ERROR: XPath evaluation error: %s: %r', ex,
                                self._xpath)
             raise ParserError(ex, repr(self._xpath))
 
 
-        return self._result
-
-    @property
-    def tree(self):
-        return getattr(self, '_tree', None)
-
-    @property
-    def result(self):
-        return getattr(self, '_result', None)
+        return result
 
 
 class Application(metaclass=Singleton):
