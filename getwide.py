@@ -204,7 +204,7 @@ def main():
 
     arg_parser.add_argument(
         '-t', '--timeout',
-        help='add timeout for network I/O', default=0
+        help='add timeout for network I/O', default=10
     )
 
     args = arg_parser.parse_args()
@@ -228,10 +228,22 @@ def main():
 
     resolutions = frozenset(args.resolution)
 
+    try:
+        timeout = int(args.timeout)
+        if timeout <= 0:
+            logger.error('ERROR: Timeout value must be greater than zero: %d',
+                         timeout)
+            sys.exit(3)
+    except ValueError:
+        logger.error('ERROR: Timeout value must be an integer type: %s',
+                     args.timeout)
+        sys.exit(2)
+
     logger.debug('DEBUG: arg --verbose: %d', args.verbose)
     logger.debug('DEBUG: arg --output: %s', args.output)
     logger.debug('DEBUG: arg --category: %r', categories)
     logger.debug('DEBUG: arg --resolution: %r', resolutions)
+    logger.debug('DEBUG: arg --timeout: %d', timeout)
 
     app = Application(logger=logger)
 
