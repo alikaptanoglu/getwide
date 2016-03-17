@@ -32,8 +32,7 @@ _xpath_text_href = lambda xp: '|'.join([xp + _XPATH_TEXT, xp + _XPATH_HREF])
 _XPATH_CATEGORY = "//ul[@class='side-panel categories']//a/"
 _XPATH_CATEGORIES = _xpath_text_href(_XPATH_CATEGORY)
 
-_XPATH_PAGE = "//div[@class='pagination']//a/"
-_XPATH_PAGES = _xpath_text_href(_XPATH_PAGE)
+_XPATH_PAGES = "//div[@class='pagination']//a/" + _XPATH_TEXT
 
 _XPATH_WALLPAPERS = ("//ul[@class='wallpapers']//li[@class='wall']//a/" +
                      _XPATH_HREF)
