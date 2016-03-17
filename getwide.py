@@ -199,7 +199,7 @@ def main():
 
     arg_parser.add_argument(
         '-r', '--resolution',
-        help='grab specified resolution', action='append', default=['2560x1440']
+        help='grab specified resolution', action='append', required=True
     )
 
     arg_parser.add_argument(
