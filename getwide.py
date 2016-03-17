@@ -44,6 +44,9 @@ _XPATH_RESOLUTIONS = ("//div[@class='wallpaper-resolutions']//"
 class ParserError(Exception):
     pass
 
+class TaskTypeError(TypeError):
+    pass
+
 
 class Singleton(type):
 
@@ -155,18 +158,162 @@ class Parser:
 
 
 class Application(metaclass=Singleton):
+    TASK_FETCH_PAGES = 10
+    TASK_FETCH_WALLPAPERS = 20
+    TASK_FETCH_RESOLUTIONS = 30
+    TASK_DOWNLOAD = 40
 
-    def __init__(self, *, logger):
+    def __init__(self, *, logger, timeout, categories, resolutions, path):
         self._loop = asyncio.get_event_loop()
         self._pool = ThreadPoolExecutor(max_workers=_MAX_THREADS)
         self._queue = asyncio.Queue()
+
         self._logger = logger
+        self._resolutions = resolutions
+        self._path = path
+
+        self._session = aiohttp.ClientSession(loop=self._loop, headers=_HEADERS)
+        self._fetcher = Fetcher(logger=self._logger, session=self._session,
+                                timeout=timeout)
 
         self._logger.debug('DEBUG: Maximum number of processes: %d',
                            _MAX_THREADS)
 
+        self._categories = self._loop.run_until_complete(self.fetch_categories(
+                                                         categories))
+        if self._categories:
+            self._loop.run_until_complete(self.queue_driver())
+
     def __del__(self):
+        self._fetcher.session.close()
         self._loop.close()
+
+    async def queue_driver(self):
+        # Initialize queue with a categories list.
+        for c in self._categories:
+            self._queue.put_nowait((self.TASK_FETCH_PAGES,
+                                    _HOST + self._categories[c]))
+
+        while not self._queue.empty():
+            task = await self._queue.get()
+
+            if task[0] == self.TASK_FETCH_PAGES:
+                await self.fetch_pages(task[1])
+            elif task[0] == self.TASK_FETCH_WALLPAPERS:
+                await self.fetch_wallpapers(task[1])
+            elif task[0] == self.TASK_FETCH_RESOLUTIONS:
+                await self.fetch_resolutions(task[1])
+            elif task[0] == self.TASK_DOWNLOAD:
+                await self.download(task[1])
+            else:
+                raise TaskTypeError(task[0])
+
+            self._queue.task_done()
+
+    async def fetch_categories(self, categories=None):
+        try:
+            page = await self._fetcher.fetch_page(_HOST)
+        except asyncio.TimeoutError:
+            self._logger.error('ERROR: Skipping URL due to timeout: %s', _HOST)
+            return None
+
+        parser = Parser(_XPATH_CATEGORIES, logger=self._logger)
+        cats = {c[1]: c[0] for c in zip(*[iter(parser(page))]*2)}
+
+        if not categories:
+            return cats
+
+        result = {}
+        for c in categories:
+            if c in cats:
+                result[c] = cats[c]
+            else:
+                self._logger.warning('WARNING: Skipping unknown category: %s',
+                                     c)
+
+        return result
+
+    @property
+    def categories(self):
+        return self._categories
+
+    async def fetch_pages(self, url):
+        self._logger.info('Fetching pages for URL: %s', url)
+
+        try:
+            page = await self._fetcher.fetch_page(url)
+        except asyncio.TimeoutError:
+            self._logger.error('ERROR: Skipping URL due to timeout: %s', url)
+            return None
+
+        parser = Parser(_XPATH_PAGES, logger=self._logger)
+
+        max_num = 0
+        for p in await self._loop.run_in_executor(self._pool, parser, page):
+            try:
+                num = int(p)
+            except ValueError:
+                pass
+            if num > max_num:
+                max_num = num
+
+        for p in range(1, max_num + 1):
+            await self._queue.put((self.TASK_FETCH_WALLPAPERS,
+                url.rsplit('.', 1)[0] + '/page/{}'.format(p))
+            )
+
+        return max_num
+
+
+    async def fetch_wallpapers(self, url):
+        self._logger.info('Fetching wallpapers for URL: %s', url)
+
+        try:
+            page = await self._fetcher.fetch_page(url)
+        except asyncio.TimeoutError:
+            self._logger.error('ERROR: Skipping URL due to timeout: %s', url)
+            return None
+
+        parser = Parser(_XPATH_WALLPAPERS, logger=self._logger)
+
+        for w in frozenset(await self._loop.run_in_executor(
+                           self._pool, parser, page)):
+            await self._queue.put((self.TASK_FETCH_RESOLUTIONS, _HOST + w))
+
+    async def fetch_resolutions(self, url):
+        self._logger.info('Fetching resolutions for URL: %s', url)
+
+        try:
+            page = await self._fetcher.fetch_page(url)
+        except asyncio.TimeoutError:
+            self._logger.error('ERROR: Skipping URL due to timeout: %s', url)
+            return None
+
+        parser = Parser(_XPATH_RESOLUTIONS, logger=self._logger)
+
+        found_res = False
+        for r in await self._loop.run_in_executor(self._pool, parser, page):
+            if any(['-{}.'.format(_) in r for _ in self._resolutions]):
+                found_res = True
+                await self._queue.put((self.TASK_DOWNLOAD, _HOST + r))
+
+        if not found_res:
+            self._logger.warning("WARNING: Cant't find appropriate "
+                                 "resolution (%s) for URL: %s",
+                                 ', '.join(self._resolutions), url)
+
+    async def download(self, url):
+        self._logger.info('Downloading wallpaper: %s', url)
+
+        try:
+            path = await self._fetcher.fetch_binary(url, op.join(self._path,
+                                                    url.rsplit('/', 1)[-1]))
+        except asyncio.TimeoutError:
+            self._logger.error('ERROR: Skipping URL due to timeout: %s', url)
+            return None
+
+        self._logger.info('DONE: %s', path)
+        return path
 
 
 def main():
