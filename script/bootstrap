@@ -32,6 +32,7 @@ function main () {
     else
         echo "ERROR: Python executable not found. Interpreter version 3.5+" \
             "required" >&2
+        return 1
     fi
 
     cd - > /dev/null
