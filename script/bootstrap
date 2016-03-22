@@ -28,7 +28,8 @@ function main () {
         "${venv_exec}" -p "${python_exec}" .env
         source .env/bin/activate
         pip install -U setuptools wheel pip
-        STATIC_DEPS=true LIBXML2_VERSION=2.9.2 pip install -r requirements.txt
+        STATIC_DEPS=true LIBXML2_VERSION=2.9.2 LIBXSLT_VERSION=1.1.28 \
+            pip install -r requirements.txt
 
         echo "Bootstrapping is done. To start using getwide activate the" \
             "virtual environment by typing:"
