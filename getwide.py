@@ -343,7 +343,7 @@ def main():
 
     arg_parser.add_argument(
         '-t', '--timeout',
-        help='add timeout for network I/O', default=10
+        help='add timeout for network I/O', default=-1
     )
 
     args = arg_parser.parse_args()
@@ -369,10 +369,10 @@ def main():
 
     try:
         timeout = int(args.timeout)
-        if timeout <= 0:
-            logger.error('ERROR: Timeout value must be greater than zero: %d',
-                         timeout)
-            sys.exit(3)
+        if timeout < 0:
+            timeout = None
+            logger.warning('WARNING: Negative values for timeout disables '
+                           'timeout logic: %s', args.timeout)
     except ValueError:
         logger.error('ERROR: Timeout value must be an integer type: %s',
                      args.timeout)
@@ -382,7 +382,7 @@ def main():
     logger.debug('DEBUG: arg --output: %s', args.output)
     logger.debug('DEBUG: arg --category: %r', categories)
     logger.debug('DEBUG: arg --resolution: %r', resolutions)
-    logger.debug('DEBUG: arg --timeout: %d', timeout)
+    logger.debug('DEBUG: arg --timeout: %r', timeout)
 
     time_start = timer()
     app = Application(logger=logger, timeout=timeout, categories=categories,
